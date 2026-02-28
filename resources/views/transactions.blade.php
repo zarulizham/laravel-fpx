@@ -42,7 +42,7 @@
 </head>
 
 <body>
-    <div class="container py-4">
+    <div id="transactions-app" class="container py-4">
         <div class="d-flex justify-content-end mb-3">
             <div class="form-check form-switch">
                 <input class="form-check-input" type="checkbox" role="switch" id="themeToggle">
@@ -52,18 +52,36 @@
 
         <div class="d-flex justify-content-between align-items-center mb-3">
             <h1 class="h3 m-0">FPX Transactions</h1>
-            <span class="text-muted">Total: {{ number_format($transactions->total()) }}</span>
+            <span class="text-muted">Total: @{{ pagination.total }}</span>
         </div>
 
-        @if (session('status'))
-            <div class="alert alert-{{ session('status.type', 'info') }} alert-dismissible fade show" role="alert">
-                {{ session('status.message') }}
-                @if (session('status.order_number'))
-                    <span class="fw-semibold">(Order Number: {{ session('status.order_number') }})</span>
-                @endif
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        <div v-if="alert.message" :class="['alert', 'alert-' + alert.type, 'alert-dismissible', 'fade', 'show']" role="alert">
+            @{{ alert.message }}
+            <span v-if="alert.orderNumber" class="fw-semibold">(Order Number: @{{ alert.orderNumber }})</span>
+            <button type="button" class="btn-close" aria-label="Close" @click="clearAlert"></button>
+        </div>
+
+        <div class="card mb-3">
+            <div class="card-body">
+                <form class="row g-2" @submit.prevent="applyFilters">
+                    <div class="col-md-6">
+                        <input type="text" class="form-control" v-model.trim="filters.search" placeholder="Search order number / Txn. ID">
+                    </div>
+                    <div class="col-md-3">
+                        <select class="form-select" v-model="filters.status">
+                            <option value="">All Status</option>
+                            <option value="success">Success</option>
+                            <option value="pending">Pending</option>
+                            <option value="failed">Failed</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3 d-flex gap-2">
+                        <button type="submit" class="btn btn-primary w-100" :disabled="loading">Search</button>
+                        <button type="button" class="btn btn-outline-secondary w-100" :disabled="loading" @click="resetFilters">Reset</button>
+                    </div>
+                </form>
             </div>
-        @endif
+        </div>
 
         <div class="card">
             <div class="card-body px-0">
@@ -83,58 +101,89 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @forelse ($transactions as $transaction)
-                                @php
-                                    $statusCode = $transaction->debit_auth_code;
-                                    $statusBadgeClass = $statusCode === '00' ? 'success' : ($statusCode === '09' ? 'warning text-dark' : 'danger');
-                                @endphp
-                                <tr>
-                                    <td>{{ $transaction->id }}</td>
-                                    <td>{{ $transaction->order_number }}</td>
-                                    <td>{{ $transaction->exchange_order_number }}</td>
-                                    <td>{{ $transaction->transaction_id ?: '-' }}</td>
-                                    <td>{{ $transaction->request_payload?->targetBankId }}</td>
-                                    <td class="text-end">{{ number_format((float) str_replace(',', '', $transaction->request_payload->amount ?? 0), 2) }}</td>
-                                    <td>
-                                        <span class="badge bg-{{ $statusBadgeClass }}">{{ $statusCode }} - {{ $transaction->response_code_description ?? 'Unknown' }}</span>
-                                    </td>
-                                    <td>{{ $transaction->updated_at?->format('Y-m-d H:i:s') }}</td>
-                                    <td class="text-end">
-                                        <form id="requery-form-{{ $transaction->id }}" method="POST" action="{{ route('fpx.transactions.requery', $transaction) }}">
-                                            @csrf
-                                        </form>
-
-                                        <div class="btn-group">
-                                            <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal"
-                                                data-bs-target="#transactionDetailsModal"
-                                                data-model="{{ $transaction }}">
-                                                Details
-                                            </button>
-                                            <button type="submit" class="btn btn-sm btn-outline-primary" form="requery-form-{{ $transaction->id }}">Requery</button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            @empty
-                                <tr>
-                                    <td colspan="9" class="text-center py-4 text-muted">No FPX transactions found.</td>
-                                </tr>
-                            @endforelse
+                            <tr v-if="loading">
+                                <td colspan="9" class="text-center py-4 text-muted">Loading transactions...</td>
+                            </tr>
+                            <tr v-else-if="transactions.length === 0">
+                                <td colspan="9" class="text-center py-4 text-muted">No FPX transactions found.</td>
+                            </tr>
+                            <tr v-else v-for="transaction in transactions" :key="transaction.id">
+                                <td>@{{ transaction.id }}</td>
+                                <td>@{{ transaction.order_number || '-' }}</td>
+                                <td>@{{ transaction.exchange_order_number || '-' }}</td>
+                                <td>@{{ transaction.transaction_id || '-' }}</td>
+                                <td>@{{ transaction.bank || '-' }}</td>
+                                <td class="text-end">@{{ transaction.amount }}</td>
+                                <td>
+                                    <span :class="['badge', 'bg-' + transaction.status_class]">
+                                        @{{ transaction.status_code }} - @{{ transaction.status_text }}
+                                    </span>
+                                </td>
+                                <td>@{{ transaction.updated_at || '-' }}</td>
+                                <td class="text-end">
+                                    <div class="btn-group">
+                                        <button type="button" class="btn btn-sm btn-outline-secondary" @click="openDetails(transaction)">
+                                            Details
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-outline-primary" @click="requery(transaction)">
+                                            Requery
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
                         </tbody>
                     </table>
                 </div>
             </div>
         </div>
 
-        <div class="mt-3">
-            {{ $transactions->links('pagination::bootstrap-5') }}
+        <div class="d-flex justify-content-between align-items-center mt-3">
+            <button type="button" class="btn btn-outline-secondary btn-sm" :disabled="!pagination.prev_page_url || loading" @click="fetchTransactions(pagination.current_page - 1)">
+                Previous
+            </button>
+            <span class="text-muted">Page @{{ pagination.current_page }} of @{{ pagination.last_page }}</span>
+            <button type="button" class="btn btn-outline-secondary btn-sm" :disabled="!pagination.next_page_url || loading" @click="fetchTransactions(pagination.current_page + 1)">
+                Next
+            </button>
+        </div>
+
+        <div class="modal fade" id="transactionDetailsModal" tabindex="-1" aria-labelledby="transactionDetailsModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg modal-dialog-scrollable modal-fullscreen">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="transactionDetailsModalLabel">FPX Transaction Details #@{{ selectedTransaction.id || '-' }}</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <h6>Transaction Info</h6>
+                                <div class="border rounded p-3 bg-body-tertiary">
+                                    <div><strong>Order Number:</strong> @{{ selectedTransaction.order_number || '-' }}</div>
+                                    <div><strong>Exchange Order Number:</strong> @{{ selectedTransaction.exchange_order_number || '-' }}</div>
+                                    <div><strong>Reference ID:</strong> @{{ selectedTransaction.reference_id || '-' }}</div>
+                                    <div><strong>Reference Type:</strong> @{{ selectedTransaction.reference_type || '-' }}</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <h6>Request Payload</h6>
+                                <pre class="border rounded p-3 bg-body-secondary mb-0"><code>@{{ prettyJson(selectedTransaction.request_payload) }}</code></pre>
+                            </div>
+                            <div class="col-md-6">
+                                <h6>Response Payload</h6>
+                                <pre class="border rounded p-3 bg-body-secondary mb-0"><code>@{{ prettyJson(selectedTransaction.response_payload) }}</code></pre>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
-
-    @include('laravel-fpx::partials.transaction-details-modal')
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
         integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
         crossorigin="anonymous"></script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
     <script>
         (function() {
             var themeStorageKey = 'laravel-fpx-theme';
@@ -172,23 +221,202 @@
                 }
             }
 
-            applyTheme(getActiveTheme());
+            function syncThemeToggle() {
+                var toggle = document.getElementById('themeToggle');
+                if (!toggle) {
+                    return;
+                }
 
-            var toggle = document.getElementById('themeToggle');
-            if (toggle) {
-                toggle.addEventListener('change', function() {
-                    var selectedTheme = toggle.checked ? 'dark' : 'light';
-                    setStoredTheme(selectedTheme);
-                    applyTheme(selectedTheme);
-                });
+                toggle.checked = (document.documentElement.getAttribute('data-bs-theme') || 'light') === 'dark';
             }
 
+            applyTheme(getActiveTheme());
+
+            document.addEventListener('change', function(event) {
+                if (!event.target || event.target.id !== 'themeToggle') {
+                    return;
+                }
+
+                var selectedTheme = event.target.checked ? 'dark' : 'light';
+                setStoredTheme(selectedTheme);
+                applyTheme(selectedTheme);
+            });
+
             var colorScheme = window.matchMedia('(prefers-color-scheme: dark)');
-            colorScheme.addEventListener('change', function() {
+            var colorSchemeChangeHandler = function() {
                 if (!getStoredTheme()) {
                     applyTheme(getOsPreferredTheme());
                 }
+            };
+
+            if (typeof colorScheme.addEventListener === 'function') {
+                colorScheme.addEventListener('change', colorSchemeChangeHandler);
+            } else if (typeof colorScheme.addListener === 'function') {
+                colorScheme.addListener(colorSchemeChangeHandler);
+            }
+
+            var csrfTokenMeta = document.querySelector('meta[name="csrf-token"]');
+            var csrfToken = csrfTokenMeta ? csrfTokenMeta.getAttribute('content') : '';
+            var detailsModal = null;
+
+            var app = Vue.createApp({
+                data: function() {
+                    return {
+                        loading: false,
+                        transactions: [],
+                        pagination: {
+                            total: 0,
+                            current_page: 1,
+                            last_page: 1,
+                            next_page_url: null,
+                            prev_page_url: null,
+                        },
+                        alert: {
+                            type: 'info',
+                            message: '',
+                            orderNumber: '',
+                        },
+                        filters: {
+                            search: '',
+                            status: '',
+                        },
+                        selectedTransaction: {},
+                    };
+                },
+                mounted: function() {
+                    var modalElement = document.getElementById('transactionDetailsModal');
+                    if (modalElement) {
+                        detailsModal = new bootstrap.Modal(modalElement);
+                    }
+
+                    this.fetchTransactions(1);
+
+                    this.$nextTick(function() {
+                        syncThemeToggle();
+                    });
+                },
+                methods: {
+                    fetchTransactions: async function(page) {
+                        if (page < 1) {
+                            return;
+                        }
+
+                        this.loading = true;
+
+                        try {
+                            var params = new URLSearchParams({
+                                page: String(page)
+                            });
+
+                            if (this.filters.search) {
+                                params.set('search', this.filters.search);
+                            }
+
+                            if (this.filters.status) {
+                                params.set('status', this.filters.status);
+                            }
+
+                            var response = await fetch("{{ route('fpx.transactions.data') }}?" + params.toString(), {
+                                headers: {
+                                    'Accept': 'application/json',
+                                }
+                            });
+
+                            if (!response.ok) {
+                                throw new Error('Failed to fetch transactions.');
+                            }
+
+                            var payload = await response.json();
+                            this.transactions = payload.data || [];
+                            this.pagination = {
+                                total: payload.total || 0,
+                                current_page: payload.current_page || 1,
+                                last_page: payload.last_page || 1,
+                                next_page_url: payload.next_page_url,
+                                prev_page_url: payload.prev_page_url,
+                            };
+                        } catch (error) {
+                            this.alert = {
+                                type: 'danger',
+                                message: error.message || 'Unable to load transactions.',
+                                orderNumber: '',
+                            };
+                        } finally {
+                            this.loading = false;
+                        }
+                    },
+                    requery: async function(transaction) {
+                        try {
+                            var response = await fetch(transaction.requery_url, {
+                                method: 'POST',
+                                headers: {
+                                    'Accept': 'application/json',
+                                    'Content-Type': 'application/json',
+                                    'X-CSRF-TOKEN': csrfToken,
+                                },
+                                body: JSON.stringify({})
+                            });
+
+                            if (!response.ok) {
+                                throw new Error('Unable to requery transaction status.');
+                            }
+
+                            var payload = await response.json();
+                            this.alert = {
+                                type: payload.type || 'info',
+                                message: payload.message || 'Requery completed.',
+                                orderNumber: payload.order_number || transaction.order_number || '',
+                            };
+
+                            if (payload.transaction && payload.transaction.id) {
+                                var index = this.transactions.findIndex(function(row) {
+                                    return row.id === payload.transaction.id;
+                                });
+
+                                if (index !== -1) {
+                                    this.transactions.splice(index, 1, payload.transaction);
+                                }
+
+                                if (this.selectedTransaction && this.selectedTransaction.id === payload.transaction.id) {
+                                    this.selectedTransaction = payload.transaction;
+                                }
+                            }
+                        } catch (error) {
+                            this.alert = {
+                                type: 'danger',
+                                message: error.message || 'Unable to requery transaction status.',
+                                orderNumber: transaction.order_number || '',
+                            };
+                        }
+                    },
+                    openDetails: function(transaction) {
+                        this.selectedTransaction = transaction || {};
+                        if (detailsModal) {
+                            detailsModal.show();
+                        }
+                    },
+                    prettyJson: function(value) {
+                        return JSON.stringify(value || {}, null, 2);
+                    },
+                    clearAlert: function() {
+                        this.alert = {
+                            type: 'info',
+                            message: '',
+                            orderNumber: '',
+                        };
+                    },
+                    applyFilters: function() {
+                        this.fetchTransactions(1);
+                    },
+                    resetFilters: function() {
+                        this.filters.search = '';
+                        this.filters.status = '';
+                        this.fetchTransactions(1);
+                    }
+                }
             });
+
+            app.mount('#transactions-app');
         })();
     </script>
 </body>

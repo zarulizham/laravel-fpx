@@ -14,6 +14,7 @@ $indirectPath = Config::get('fpx.indirect_path');
 Route::post('fpx/payment/auth', [PaymentController::class, 'handle'])->name('fpx.payment.auth.request');
 
 Route::get('fpx/transactions', [TransactionController::class, 'index'])->name('fpx.transactions.index');
+Route::get('fpx/transactions/data', [TransactionController::class, 'data'])->name('fpx.transactions.data');
 Route::post('fpx/transactions/{transaction}/requery', [TransactionController::class, 'requery'])->name('fpx.transactions.requery');
 
 Route::post($directPath, [Controller::class, 'direct'])->name('fpx.payment.direct');
