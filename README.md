@@ -86,7 +86,7 @@ php artisan vendor:publish --provider="ZarulIzham\\Fpx\\FpxServiceProvider" --ta
 php artisan migrate
 ```
 
-5. Laravel 12: Exclude FPX direct callback route from CSRF validation in `bootstrap/app.php`.
+1. Laravel 12: Exclude validate CSRF Token for FPX direct callback URL in `bootstrap/app.php`.
 
 ```php
 use Illuminate\Foundation\Configuration\Middleware;
