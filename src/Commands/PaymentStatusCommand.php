@@ -16,7 +16,7 @@ class PaymentStatusCommand extends Command
 	 *
 	 * @var string
 	 */
-	protected $signature = 'fpx:payment-status {reference_id? : Order Reference Id}';
+	protected $signature = 'fpx:payment-status {order_number? : Order Number}';
 
 	/**
 	 * The console command description.
@@ -41,27 +41,30 @@ class PaymentStatusCommand extends Command
 	public function handle()
 	{
 
-		$reference_ids = $this->argument('reference_id');
-		if ($reference_ids) {
-			$reference_ids = explode(',', $reference_ids);
-			$reference_ids = FpxTransaction::whereIn('reference_id', $reference_ids)->get('reference_id')->toArray();
+		$orderNumbers = $this->argument('order_number');
+		if ($orderNumbers) {
+			$orderNumbers = explode(',', $orderNumbers);
+			$orderNumbers = FpxTransaction::query()
+				->whereIn('order_number', $orderNumbers)
+				->get('order_number')
+				->toArray();
 		} else {
-			$reference_ids = FpxTransaction::whereNull('debit_auth_code')->orWhere('debit_auth_code', AuthEnquiry::STATUS_PENDING_CODE)->get('reference_id')->toArray();
+			$orderNumbers = FpxTransaction::whereNull('debit_auth_code')->orWhere('debit_auth_code', AuthEnquiry::STATUS_PENDING_CODE)->get('order_number')->toArray();
 		}
 
-		if ($reference_ids) {
+		if ($orderNumbers) {
 			try {
-				$bar = $this->output->createProgressBar(count($reference_ids));
+				$bar = $this->output->createProgressBar(count($orderNumbers));
 				$bar->start();
-				foreach ($reference_ids as $row) {
-					$status[] = Fpx::getTransactionStatus($row['reference_id']);
+				foreach ($orderNumbers as $row) {
+					$status[] = Fpx::getTransactionStatus($row['order_number']);
 				}
 			} catch (\Exception $e) {
 				$status[] = [
 					'status' => 'failed',
 					'message' => $e->getMessage(),
 					'transaction_id' => null,
-					'reference_id' => $row['reference_id'],
+					'order_number' => $row['order_number'],
 					'amount' => null,
 					'transaction_timestamp' => null,
 					'buyer_bank_name' => null,

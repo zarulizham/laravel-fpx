@@ -15,8 +15,9 @@ return new class extends Migration
 	{
 		Schema::create(config('fpx.tables.fpx_transactions', 'fpx_transactions'), function (Blueprint $table) {
 			$table->id();
-			$table->string('unique_id')->comment('Unique auto generated reference Id');
-			$table->string('reference_id')->comment('Unique Order no/Reference id');
+			$table->nullableMorphs('reference');
+			$table->string('order_number')->nullable()->comment('Order number');
+			$table->string('exchange_order_number')->nullable()->comment('Exchange order number');
 			$table->string('transaction_id')->nullable()->comment('Transaction id returned by FPX');
 			$table->string('debit_auth_code')->default('09')->comment('Transaction status code');
 			$table->text('request_payload')->comment('Request data sent to FPX');

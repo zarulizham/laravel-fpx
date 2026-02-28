@@ -21,7 +21,7 @@
         <form class="needs-validation" novalidate method="POST" action="{{ route('fpx.payment.auth.request') }}">
             @csrf
             <input type="hidden" name="flow" value="01" />
-            <input type="hidden" name="reference_id" value="{{ uniqid() }}" />
+            <input type="hidden" name="order_number" value="{{ uniqid() }}" />
             <input type="hidden" name="datetime" value="{{ now() }}" />
             {{ implode(',', $errors->all()) }}
             <div class="row">

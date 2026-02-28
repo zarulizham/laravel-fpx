@@ -57,14 +57,18 @@ class AuthEnquiry extends Message implements Contract
     public function handle($options)
     {
         $data = Validator::make($options, [
-            'reference_id' => 'required',
+            'order_number' => 'required',
+            'exchange_order_number' => 'nullable',
             'response_format' => 'nullable',
         ])->validate();
 
+        $orderNumber = $data['order_number'];
+        $exchangeOrderNumber = $options['exchange_order_number'] ?? null;
+
         $transaction = FpxTransaction::query()
-            ->where('reference_id', $data['reference_id'])
-            ->when(isset($options['unique_id']) && $options['unique_id'], function ($q) use ($options) {
-                $q->where('unique_id', $options['unique_id']);
+            ->where('order_number', $orderNumber)
+            ->when($exchangeOrderNumber, function ($query) use ($exchangeOrderNumber) {
+                $query->where('exchange_order_number', $exchangeOrderNumber);
             })
             ->latest()
             ->firstOrFail();
@@ -73,7 +77,7 @@ class AuthEnquiry extends Message implements Contract
 
         $this->type = self::CODE;
         $this->flow = $data->flow;
-        $this->reference = $data->reference;
+        $this->reference = $transaction->order_number;
         $this->timestamp = $data->timestamp;
         $this->currency = $data->currency;
         $this->productDescription = $data->productDescription;
@@ -81,7 +85,7 @@ class AuthEnquiry extends Message implements Contract
         $this->buyerEmail = $data->buyerEmail;
         $this->buyerName = $data->buyerName;
         $this->targetBankId = $data->buyerId;
-        $this->id = $data->id;
+        $this->id = $transaction->exchange_order_number;
         $this->checkSum = $this->getCheckSum($this->format());
         $this->responseFormat = $data->response_format ?? 'HTML';
         $this->additionalParams = $transaction->additional_params;
@@ -194,7 +198,8 @@ class AuthEnquiry extends Message implements Contract
                 'status' => self::STATUS_SUCCESS,
                 'message' => 'Payment is successful',
                 'transaction_id' => $this->foreignId,
-                'reference_id' => $this->reference,
+                'order_number' => $this->reference,
+                'exchange_order_number' => $this->id,
                 'amount' => $this->amount,
                 'transaction_timestamp' => $this->foreignTimestamp,
                 'buyer_bank_name' => $this->targetBankBranch,
@@ -208,7 +213,8 @@ class AuthEnquiry extends Message implements Contract
                 'status' => self::STATUS_PENDING,
                 'message' => 'Payment Transaction Pending',
                 'transaction_id' => $this->foreignId,
-                'reference_id' => $this->reference,
+                'order_number' => $this->reference,
+                'exchange_order_number' => $this->id,
                 'amount' => $this->amount,
                 'transaction_timestamp' => $this->foreignTimestamp,
                 'buyer_bank_name' => $this->targetBankBranch,
@@ -221,7 +227,8 @@ class AuthEnquiry extends Message implements Contract
             'status' => self::STATUS_FAILED,
             'message' => @Response::STATUS[$this->debitResponseStatus] ?? 'Payment Request Failed',
             'transaction_id' => $this->foreignId,
-            'reference_id' => $this->reference,
+            'order_number' => $this->reference,
+            'exchange_order_number' => $this->id,
             'amount' => $this->amount,
             'transaction_timestamp' => $this->foreignTimestamp,
             'buyer_bank_name' => $this->targetBankBranch,
@@ -284,9 +291,13 @@ class AuthEnquiry extends Message implements Contract
      */
     public function saveTransaction(): FpxTransaction
     {
-        $transaction = FpxTransaction::where(['unique_id' => $this->id])->first();
+        $transaction = FpxTransaction::query()
+            ->where('exchange_order_number', $this->id)
+            ->first();
 
         $transaction->transaction_id = $this->foreignId;
+        $transaction->exchange_order_number = $this->id;
+        $transaction->order_number = $this->reference;
         $transaction->debit_auth_code = $this->debitResponseStatus;
         $transaction->response_payload = $this->responseList()->toArray();
         $transaction->save();

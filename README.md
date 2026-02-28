@@ -185,6 +185,20 @@ $banks = Fpx::getBankList(true);
 
 ```
 
+7. Restrict access to `fpx/transactions` routes in your `AppServiceProvider`.
+
+```php
+use ZarulIzham\Fpx\Fpx;
+
+public function boot(): void
+{
+	Fpx::auth(function ($request) {
+		return $request->user()
+			&& $request->user()->role('Programmer');
+	});
+}
+```
+
 ## Web Integration
 
 You can visit <a href='http://app.test/fpx/initiate/payment'>http://app.test/fpx/initiate/payment</a> for the payment flow demo of web integration.

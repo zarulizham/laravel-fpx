@@ -71,7 +71,8 @@ class AuthorizationConfirmation extends Message implements Contract
                     'status' => self::STATUS_SUCCESS,
                     'message' => 'Payment is successful',
                     'transaction_id' => $this->foreignId,
-                    'reference_id' => $this->reference,
+                    'order_number' => $this->reference,
+                    'exchange_order_number' => $this->id,
                     'amount' => $this->amount,
                     'transaction_timestamp' => $this->foreignTimestamp,
                     'buyer_bank_name' => $this->targetBankBranch,
@@ -85,7 +86,8 @@ class AuthorizationConfirmation extends Message implements Contract
                     'status' => self::STATUS_PENDING,
                     'message' => 'Payment Transaction Pending',
                     'transaction_id' => $this->foreignId,
-                    'reference_id' => $this->reference,
+                    'order_number' => $this->reference,
+                    'exchange_order_number' => $this->id,
                     'amount' => $this->amount,
                     'transaction_timestamp' => $this->foreignTimestamp,
                     'buyer_bank_name' => $this->targetBankBranch,
@@ -98,7 +100,8 @@ class AuthorizationConfirmation extends Message implements Contract
                 'status' => self::STATUS_FAILED,
                 'message' => @Response::STATUS[$this->debitResponseStatus] ?? 'Payment Request Failed',
                 'transaction_id' => $this->foreignId,
-                'reference_id' => $this->reference,
+                'order_number' => $this->reference,
+                'exchange_order_number' => $this->id,
                 'amount' => $this->amount,
                 'transaction_timestamp' => $this->foreignTimestamp,
                 'buyer_bank_name' => $this->targetBankBranch,
@@ -110,7 +113,8 @@ class AuthorizationConfirmation extends Message implements Contract
                 'status' => self::STATUS_FAILED,
                 'message' => "Failed to verify the request origin",
                 'transaction_id' => $this->foreignId,
-                'reference_id' => $this->reference,
+                'order_number' => $this->reference,
+                'exchange_order_number' => $this->id,
                 'amount' => $this->amount,
                 'transaction_timestamp' => $this->foreignTimestamp,
                 'buyer_bank_name' => $this->targetBankBranch,
@@ -166,13 +170,15 @@ class AuthorizationConfirmation extends Message implements Contract
      */
     public function saveTransaction(): FpxTransaction
     {
-        $transaction = FpxTransaction::where(['unique_id' => $this->id])->firstOrNew();
+        $transaction = FpxTransaction::query()
+            ->where('exchange_order_number', $this->id)
+            ->firstOrNew();
 
-        $transaction->reference_id = $this->reference;
+        $transaction->order_number = $this->reference;
         $transaction->request_payload = $transaction->request_payload ?? null;
         $transaction->response_format = $transaction->response_format ?? '';
         $transaction->additional_params = $transaction->additional_params ?? '';
-        $transaction->unique_id = $this->id;
+        $transaction->exchange_order_number = $this->id;
         $transaction->transaction_id = $this->foreignId;
         $transaction->debit_auth_code = $this->debitResponseStatus;
         $transaction->response_payload = json_decode($this->list()->toJson());

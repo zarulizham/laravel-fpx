@@ -3,13 +3,18 @@
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Config;
 use App\Http\Controllers\FPX\Controller;
+use ZarulIzham\Fpx\Fpx;
 use ZarulIzham\Fpx\Http\Controllers\PaymentController;
+use ZarulIzham\Fpx\Http\Controllers\TransactionController;
 
 
 $directPath = Config::get('fpx.direct_path');
 $indirectPath = Config::get('fpx.indirect_path');
 
 Route::post('fpx/payment/auth', [PaymentController::class, 'handle'])->name('fpx.payment.auth.request');
+
+Route::get('fpx/transactions', [TransactionController::class, 'index'])->name('fpx.transactions.index');
+Route::post('fpx/transactions/{transaction}/requery', [TransactionController::class, 'requery'])->name('fpx.transactions.requery');
 
 Route::post($directPath, [Controller::class, 'direct'])->name('fpx.payment.direct');
 Route::post($indirectPath, [Controller::class, 'indirect'])->name('fpx.payment.indirect');

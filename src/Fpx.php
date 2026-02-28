@@ -2,8 +2,10 @@
 
 namespace ZarulIzham\Fpx;
 
+use Closure;
 use Exception;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Http\Request;
 use ZarulIzham\Fpx\Exceptions\InvalidCertificateException;
 use ZarulIzham\Fpx\Messages\AuthEnquiry;
 use ZarulIzham\Fpx\Messages\BankEnquiry;
@@ -11,6 +13,31 @@ use ZarulIzham\Fpx\Models\Bank;
 
 class Fpx
 {
+    /**
+     * Route authorization callback.
+     */
+    protected static ?Closure $authUsing = null;
+
+    /**
+     * Register route authorization callback.
+     */
+    public static function auth(Closure $callback): void
+    {
+        static::$authUsing = $callback;
+    }
+
+    /**
+     * Returns whether request is authorized to access FPX transaction routes.
+     */
+    public static function check(Request $request): bool
+    {
+        if (static::$authUsing instanceof Closure) {
+            return (bool) call_user_func(static::$authUsing, $request);
+        }
+
+        return (bool) $request->user();
+    }
+
     /**
      * returns collection of bank_id and name
      *
@@ -64,14 +91,17 @@ class Fpx
     /**
      * Returns status of transaction
      *
-     * @param  string  $reference_id  reference order id
+     * @param  string  $order_number  order number
      * @return array
      */
-    public static function getTransactionStatus(string $reference_id, ?string $unique_id = null)
+    public static function getTransactionStatus(string $order_number, ?string $exchange_order_number = null)
     {
         try {
             $authEnquiry = new AuthEnquiry;
-            $authEnquiry->handle(compact('reference_id', 'unique_id'));
+            $authEnquiry->handle([
+                'order_number' => $order_number,
+                'exchange_order_number' => $exchange_order_number,
+            ]);
 
             $dataList = $authEnquiry->getData();
             $response = $authEnquiry->connect($dataList);
@@ -85,7 +115,8 @@ class Fpx
                     'status' => 'failed',
                     'message' => 'We could not find any data',
                     'transaction_id' => null,
-                    'reference_id' => $reference_id,
+                    'order_number' => $order_number,
+                    'exchange_order_number' => $exchange_order_number,
                     'amount' => null,
                     'transaction_timestamp' => null,
                     'buyer_bank_name' => null,
@@ -100,7 +131,8 @@ class Fpx
                 'status' => 'failed',
                 'message' => 'Invalid reference Id',
                 'transaction_id' => null,
-                'reference_id' => $reference_id,
+                'order_number' => $order_number,
+                'exchange_order_number' => $exchange_order_number,
                 'amount' => null,
                 'transaction_timestamp' => null,
                 'buyer_bank_name' => null,
@@ -112,7 +144,8 @@ class Fpx
                 'status' => 'failed',
                 'message' => 'Failed to verify the request origin',
                 'transaction_id' => null,
-                'reference_id' => $reference_id,
+                'order_number' => $order_number,
+                'exchange_order_number' => $exchange_order_number,
                 'amount' => null,
                 'transaction_timestamp' => null,
                 'buyer_bank_name' => null,
@@ -124,7 +157,8 @@ class Fpx
                 'status' => 'failed',
                 'message' => $e->getMessage(),
                 'transaction_id' => null,
-                'reference_id' => $reference_id,
+                'order_number' => $order_number,
+                'exchange_order_number' => $exchange_order_number,
                 'amount' => null,
                 'transaction_timestamp' => null,
                 'buyer_bank_name' => null,

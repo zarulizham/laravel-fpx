@@ -179,7 +179,9 @@ class Message
 	{
 		do {
 			$uuid = Str::uuid();
-		} while (FpxTransaction::where("unique_id", $uuid)->first());
+		} while (FpxTransaction::query()
+			->where('exchange_order_number', $uuid)
+			->first());
 
 		return $uuid;
 	}

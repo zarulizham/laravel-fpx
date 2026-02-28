@@ -29,6 +29,8 @@
 
         <form class="needs-validation" novalidate method="POST" action="{{ route('fpx.payment.auth.request') }}">
             @csrf
+            <input type="hidden" name="reference_id" value="1" />
+            <input type="hidden" name="reference_type" value="App\\Models\\Bill" />
             <input type="hidden" name="response_format" value="{{ $response_format }}" />
             <input type="hidden" name="additional_params" value="{{ $request->additional_params ?? '' }}" />
             @if ($errors->any())
@@ -124,12 +126,18 @@
                         </div>
 
                         <div class="mb-3">
-                            <label for="reference_id">Reference ID</label>
-                            <input type="text" class="form-control" id="reference_id" name="reference_id"
-                                placeholder="Enter Product Description" value="{{ $request->reference_id ?? uniqid() }}" required>
+                            <label for="order_number">Order Number</label>
+                            <input type="text" class="form-control" id="order_number" name="order_number"
+                                placeholder="Enter Order Number" value="{{ $request->order_number ?? uniqid() }}" required>
                             <div class="invalid-feedback">
-                                Please enter valid reference ID
+                                Please enter a valid order number
                             </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="exchange_order_number">Exchange Order Number (Optional)</label>
+                            <input type="text" class="form-control" id="exchange_order_number" name="exchange_order_number"
+                                placeholder="Auto-generated if empty" value="{{ $request->exchange_order_number ?? '' }}">
                         </div>
                     </div>
                 </div>

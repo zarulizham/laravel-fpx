@@ -2,11 +2,12 @@
 
 namespace ZarulIzham\Fpx\Models;
 
-use ZarulIzham\Fpx\Models\Bank;
-use Illuminate\Database\Eloquent\Model;
-use ZarulIzham\Fpx\Constant\Response;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\MorphTo;
+use ZarulIzham\Fpx\Constant\Response;
+use ZarulIzham\Fpx\Models\Bank;
 
 class FpxTransaction extends Model
 {
@@ -46,6 +47,11 @@ class FpxTransaction extends Model
 
 	public function getResponseCodeDescriptionAttribute()
 	{
-		return Response::STATUS[$this->debit_auth_code];
+		return Response::STATUS[$this->debit_auth_code] ?? 'Unknown';
+	}
+
+	public function reference(): MorphTo
+	{
+		return $this->morphTo();
 	}
 }

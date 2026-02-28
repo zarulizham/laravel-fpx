@@ -14,6 +14,10 @@ class AuthorizationRequest extends Message implements Contract
 {
 	use VerifyCertificate;
 
+	protected $referenceId;
+
+	protected $referenceType;
+
 	/**
 	 * Message code on the FPX side
 	 */
@@ -46,7 +50,10 @@ class AuthorizationRequest extends Message implements Contract
 		$data = Validator::make(
 			$options,
 			[
-				'reference_id' => 'required',
+				'order_number' => 'required',
+				'exchange_order_number' => 'nullable',
+				'reference_id' => 'nullable',
+				'reference_type' => 'nullable|string|max:255',
 				'datetime' => 'nullable',
 				'currency' => 'nullable',
 				'response_format' => 'nullable',
@@ -59,7 +66,7 @@ class AuthorizationRequest extends Message implements Contract
 				'flow' => 'required|in:01,02,03',
 			],
 			[
-				'reference_id.required' => 'Order Reference Id is required.',
+				'order_number.required' => 'Order Number is required.',
 				'customer_name.required' => 'Buyer Name is required.',
 				'customer_email.required' => 'Email is required.',
 				'bank_id.required' => 'Please select bank for the payment.',
@@ -70,7 +77,10 @@ class AuthorizationRequest extends Message implements Contract
 
 		$this->type = self::CODE;
 		$this->flow = $data['flow'];
-		$this->reference = $data['reference_id'];
+		$this->reference = $data['order_number'];
+		$this->id = $data['exchange_order_number'] ?? $this->id;
+		$this->referenceId = $data['reference_id'] ?? null;
+		$this->referenceType = $data['reference_type'] ?? null;
 		$this->timestamp = $data['datetime'] ?? date("YmdHis");
 		$this->currency = $data['currency'] ?? $this->currency;
 		$this->productDescription = $data['remark'] ?? ' ';
@@ -133,8 +143,10 @@ class AuthorizationRequest extends Message implements Contract
 	{
 
 		$transaction = new FpxTransaction;
-		$transaction->unique_id = $this->id;
-		$transaction->reference_id = $this->reference;
+		$transaction->exchange_order_number = $this->id;
+		$transaction->order_number = $this->reference;
+		$transaction->reference_id = $this->referenceId;
+		$transaction->reference_type = $this->referenceType;
 		$transaction->response_format = $this->responseFormat;
 		$transaction->additional_params = $this->additionalParams;
 		$transaction->request_payload = json_decode($this->list()->toJson());
