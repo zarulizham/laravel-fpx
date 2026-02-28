@@ -21,6 +21,7 @@ class FpxServiceProvider extends ServiceProvider
 
 		$this->loadViewsFrom(__DIR__.'/../resources/views', 'laravel-fpx');
 		$this->loadViewsFrom(__DIR__.'/../resources/views', 'fpx-payment');
+		$this->loadTranslationsFrom(__DIR__.'/../resources/lang', 'laravel-fpx');
 
 		$this->configureComponents();
 
@@ -84,6 +85,10 @@ class FpxServiceProvider extends ServiceProvider
 			$this->publishes([
 				__DIR__.'/../resources/lang/en.php' => lang_path('vendor/laravel-fpx/en.php'),
 				__DIR__.'/../resources/lang/ms.php' => lang_path('vendor/laravel-fpx/ms.php'),
+				__DIR__.'/../resources/lang/en/messages.php' => lang_path('vendor/laravel-fpx/en/messages.php'),
+				__DIR__.'/../resources/lang/ms/messages.php' => lang_path('vendor/laravel-fpx/ms/messages.php'),
+				__DIR__.'/../resources/lang/en/status.php' => lang_path('vendor/laravel-fpx/en/status.php'),
+				__DIR__.'/../resources/lang/ms/status.php' => lang_path('vendor/laravel-fpx/ms/status.php'),
 			], 'fpx-locales');
 
 			$this->commands([

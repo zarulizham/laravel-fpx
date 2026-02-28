@@ -4,8 +4,6 @@ namespace ZarulIzham\Fpx\Constant;
 
 class Response
 {
-	protected static array $localeMapCache = [];
-
 	public const STATUS = [
 		"00" => "Approved",
 		"03" => "Invalid Merchant",
@@ -110,41 +108,18 @@ class Response
 		}
 
 		$defaultMessage = self::STATUS[$code] ?? $fallback;
-		$targetLocale = $locale ?: app()->getLocale();
-		$messages = self::localeMessages($targetLocale);
+		$translationKey = "laravel-fpx::status.$code";
+		$translated = __($translationKey, [], $locale);
 
-		return $messages['status'][$code] ?? $defaultMessage;
+		return $translated !== $translationKey ? $translated : $defaultMessage;
 	}
 
-	protected static function localeMessages(string $locale): array
+	public static function text(string $key, string $fallback, ?string $locale = null): string
 	{
-		if (isset(self::$localeMapCache[$locale])) {
-			return self::$localeMapCache[$locale];
-		}
+		$translationKey = "laravel-fpx::$key";
+		$translated = __($translationKey, [], $locale);
 
-		$paths = [];
-
-		if (function_exists('lang_path')) {
-			$paths[] = lang_path("vendor/laravel-fpx/$locale.php");
-		}
-
-		$paths[] = base_path("lang/vendor/laravel-fpx/$locale.php");
-		$paths[] = resource_path("lang/vendor/laravel-fpx/$locale.php");
-		$paths[] = __DIR__."/../../resources/lang/$locale.php";
-
-		foreach ($paths as $path) {
-			if (! is_file($path)) {
-				continue;
-			}
-
-			$data = include $path;
-
-			if (is_array($data)) {
-				return self::$localeMapCache[$locale] = $data;
-			}
-		}
-
-		return self::$localeMapCache[$locale] = [];
+		return $translated !== $translationKey ? $translated : $fallback;
 	}
 }
 
