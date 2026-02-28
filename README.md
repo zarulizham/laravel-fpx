@@ -209,6 +209,10 @@ public function boot(): void
 
 You can visit <a href='http://app.test/fpx/initiate/payment'>http://app.test/fpx/initiate/payment</a> for the payment flow demo of web integration.
 
+## B2B Approval / Checker
+
+In order to approve `Pending Authorization` transaction, navigate here and enter transaction ID. https://simulator.fpx.uat.inet.paynet.my/UatBuyerBankSim1.7/B2BAuth.jsp
+
 ## Mobile App Integration
 
 - Append `app` parameter in the URL to check the demo. [http://app.test/fpx/initiate/payment/app](http://app.test/fpx/initiate/payment/app) 
