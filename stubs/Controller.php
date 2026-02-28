@@ -16,10 +16,9 @@ class Controller extends BaseController
 	public function direct(Request $request)
 	{
 		$response = $request->handle();
-		if ($response['response_format'] == 'JSON')
-			return response()->json(['response' => $response, 'fpx_response' => $request->all()]);
-
 		// Update your order status
+
+		return 'OK';
 	}
 
 	/**
@@ -28,16 +27,15 @@ class Controller extends BaseController
 	public function indirect(Request $request)
 	{
 		$response = $request->handle();
-
 		// Update your order status
 
-		return 'OK';
+		return redirect('some/url');
 	}
 
 	/**
 	 * Initiate FPX payment
 	 */
-	public function initiatePayment(Request $request, $iniated_from = 'web', $test = '')
+	public function initiatePayment(Request $request, $iniated_from = 'web')
 	{
 		$day = 1;
 		$hour = 24;
@@ -50,6 +48,6 @@ class Controller extends BaseController
 
 		$response_format = $iniated_from == 'app' ? 'JSON' : 'HTML';
 
-		return view('laravel-fpx::payment', compact('banks', 'response_format', 'test', 'request'));
+		return view('laravel-fpx::payment', compact('banks', 'response_format', 'request'));
 	}
 }

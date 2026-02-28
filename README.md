@@ -75,6 +75,18 @@ php artisan vendor:publish --provider="ZarulIzham\\Fpx\\FpxServiceProvider" --ta
 php artisan migrate
 ```
 
+5. Laravel 12: Exclude FPX direct callback route from CSRF validation in `bootstrap/app.php`.
+
+```php
+use Illuminate\Foundation\Configuration\Middleware;
+
+->withMiddleware(function (Middleware $middleware): void {
+	$middleware->validateCsrfTokens(except: [
+		'fpx/direct',
+	]);
+})
+```
+
 ## Usage
 
 1. First run the following command to seed the banks list.
@@ -123,28 +135,22 @@ During testing, you can use the `test-mode` attribute to override the provided a
 	/**
 	 * This will be called after the user approve the payment
 	 * on the bank side
-	 *
-	 * @param Request $request
-	 * @return Response
 	 */
-	public function callback(Request $request) {
+	public function direct(Request $request) {
 		$response = $request->handle();
 
 		// Update your order status
+		return 'OK';
 	}
 
 	/**
-	 * This will handle any direct call from FPX
-	 *
-	 * @param Request $request
-	 * @return string
+	 * This will handle any browser redirect from FPX
 	 */
-	public function webhook(Request $request) {
+	public function indirect(Request $request) {
 		$response = $request->handle();
 
 		// Update your order status
-
-		return 'OK';
+		return redirect('some/url');
 	}
 ```
 

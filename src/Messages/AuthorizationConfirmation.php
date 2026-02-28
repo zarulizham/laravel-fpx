@@ -49,9 +49,9 @@ class AuthorizationConfirmation extends Message implements Contract
         $this->flow = @$options['fpx_msgToken'];
         $this->type = @$options['fpx_msgType'];
         $this->exchangeId = @$options['fpx_sellerExId'];
-        $this->id = @$options['fpx_sellerExOrderNo'];
+        $this->exchangeOrderNumber = @$options['fpx_sellerExOrderNo'];
         $this->sellerId = @$options['fpx_sellerId'];
-        $this->reference = @$options['fpx_sellerOrderNo'];
+        $this->orderNumber = @$options['fpx_sellerOrderNo'];
         $this->timestamp = @$options['fpx_sellerTxnTime'];
         $this->amount = @$options['fpx_txnAmount'];
         $this->currency = @$options['fpx_txnCurrency'];
@@ -71,8 +71,8 @@ class AuthorizationConfirmation extends Message implements Contract
                     'status' => self::STATUS_SUCCESS,
                     'message' => 'Payment is successful',
                     'transaction_id' => $this->foreignId,
-                    'order_number' => $this->reference,
-                    'exchange_order_number' => $this->id,
+                    'order_number' => $this->orderNumber,
+                    'exchange_order_number' => $this->exchangeOrderNumber,
                     'amount' => $this->amount,
                     'transaction_timestamp' => $this->foreignTimestamp,
                     'buyer_bank_name' => $this->targetBankBranch,
@@ -86,8 +86,8 @@ class AuthorizationConfirmation extends Message implements Contract
                     'status' => self::STATUS_PENDING,
                     'message' => 'Payment Transaction Pending',
                     'transaction_id' => $this->foreignId,
-                    'order_number' => $this->reference,
-                    'exchange_order_number' => $this->id,
+                    'order_number' => $this->orderNumber,
+                    'exchange_order_number' => $this->exchangeOrderNumber,
                     'amount' => $this->amount,
                     'transaction_timestamp' => $this->foreignTimestamp,
                     'buyer_bank_name' => $this->targetBankBranch,
@@ -100,8 +100,8 @@ class AuthorizationConfirmation extends Message implements Contract
                 'status' => self::STATUS_FAILED,
                 'message' => @Response::STATUS[$this->debitResponseStatus] ?? 'Payment Request Failed',
                 'transaction_id' => $this->foreignId,
-                'order_number' => $this->reference,
-                'exchange_order_number' => $this->id,
+                'order_number' => $this->orderNumber,
+                'exchange_order_number' => $this->exchangeOrderNumber,
                 'amount' => $this->amount,
                 'transaction_timestamp' => $this->foreignTimestamp,
                 'buyer_bank_name' => $this->targetBankBranch,
@@ -113,8 +113,8 @@ class AuthorizationConfirmation extends Message implements Contract
                 'status' => self::STATUS_FAILED,
                 'message' => "Failed to verify the request origin",
                 'transaction_id' => $this->foreignId,
-                'order_number' => $this->reference,
-                'exchange_order_number' => $this->id,
+                'order_number' => $this->orderNumber,
+                'exchange_order_number' => $this->exchangeOrderNumber,
                 'amount' => $this->amount,
                 'transaction_timestamp' => $this->foreignTimestamp,
                 'buyer_bank_name' => $this->targetBankBranch,
@@ -154,9 +154,9 @@ class AuthorizationConfirmation extends Message implements Contract
             'fpx_msgToken' => $this->flow ?? '',
             'fpx_msgType' => $this->type ?? '',
             'fpx_sellerExId' => $this->exchangeId ?? '',
-            'fpx_sellerExOrderNo' => $this->id ?? '',
+            'fpx_sellerExOrderNo' => $this->exchangeOrderNumber ?? '',
             'fpx_sellerId' => $this->sellerId ?? '',
-            'fpx_sellerOrderNo' => $this->reference ?? '',
+            'fpx_sellerOrderNo' => $this->orderNumber ?? '',
             'fpx_sellerTxnTime' => $this->timestamp ?? '',
             'fpx_txnAmount' => $this->amount ?? '',
             'fpx_txnCurrency' => $this->currency ?? '',
@@ -171,14 +171,14 @@ class AuthorizationConfirmation extends Message implements Contract
     public function saveTransaction(): FpxTransaction
     {
         $transaction = FpxTransaction::query()
-            ->where('exchange_order_number', $this->id)
+            ->where('exchange_order_number', $this->exchangeOrderNumber)
             ->firstOrNew();
 
-        $transaction->order_number = $this->reference;
+        $transaction->order_number = $this->orderNumber;
         $transaction->request_payload = $transaction->request_payload ?? null;
         $transaction->response_format = $transaction->response_format ?? '';
         $transaction->additional_params = $transaction->additional_params ?? '';
-        $transaction->exchange_order_number = $this->id;
+        $transaction->exchange_order_number = $this->exchangeOrderNumber;
         $transaction->transaction_id = $this->foreignId;
         $transaction->debit_auth_code = $this->debitResponseStatus;
         $transaction->response_payload = json_decode($this->list()->toJson());

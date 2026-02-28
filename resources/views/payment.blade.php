@@ -99,7 +99,7 @@
                                 <label for="customer_name">Buyer name</label>
                                 <input type="text" class="form-control" id="customer_name" name="customer_name"
                                     placeholder="Enter buyer name"
-                                    value="{{ $test ? 'Test Buyer Name' : $request->customer_name }}" required>
+                                    value="{{ $request->customer_name ?? 'Test Buyer Name' }}" required>
                                 <div class="invalid-feedback">
                                     Valid buyer name is required.
                                 </div>
@@ -109,7 +109,7 @@
                         <div class="mb-3">
                             <label for="amount">Amount</label>
                             <input type="number" class="form-control" id="amount" name="amount"
-                                placeholder="1.00" value="{{ $test ? '1.0' : $request->amount }}" required>
+                                placeholder="1.00" value="{{ $request->amount ?? '1.0' }}" required>
                             <div class="invalid-feedback">
                                 Please enter a valid amount.
                             </div>
@@ -118,7 +118,7 @@
                         <div class="mb-3">
                             <label for="customer_email">Email</label>
                             <input type="email" class="form-control" id="customer_email" name="customer_email"
-                                value="{{ $test ? 'hello@example.com' : $request->customer_email }}"
+                                value="{{ $request->customer_email ?? 'hello@example.com' }}"
                                 placeholder="you@example.com" required>
                             <div class="invalid-feedback">
                                 Please enter a valid email address.
