@@ -43,7 +43,8 @@
 
 <body>
     <div id="transactions-app" class="container py-4">
-        <div class="d-flex justify-content-end mb-3">
+        <div class="d-flex justify-content-between mb-3 align-items-center">
+            <img src="{{ asset('assets/vendor/fpx/images/fpx.svg') }}" alt="" height="40">
             <div class="form-check form-switch">
                 <input class="form-check-input" type="checkbox" role="switch" id="themeToggle">
                 <label class="form-check-label" for="themeToggle">Dark mode</label>

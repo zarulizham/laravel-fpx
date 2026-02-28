@@ -7,6 +7,12 @@
 
 This package provides Laravel implementations for Paynet FPX services.
 
+## Shipped with transaction viewer (available in dark mode)
+
+Simple query FPX transaction and view status including request and response payload.
+
+<img src="https://i.ibb.co/wh17Q7pS/ezgif-3dd975b58c468bb8.gif" alt="Transaction preview" width="100%" />
+
 ## Installation
 
 You can install the package via composer:
