@@ -1,0 +1,57 @@
+{
+    "name": "zarulizham/laravel-fpx",
+    "description": "A Laravel implementation for FPX payment service",
+    "keywords": [
+        "ZarulIzham",
+        "FPX",
+        "FPX Payment Gateway",
+        "FPX Pay",
+        "fpx-payment",
+        "Malaysian Payment Gateway",
+        "Laravel FPX",
+        "Laravel FPX Payment Gateway"
+    ],
+    "homepage": "https://github.com/zarulizham/laravel-fpx",
+    "license": "MIT",
+    "type": "library",
+    "authors": [
+        {
+            "name": "Zarul Izham",
+            "email": "zarul.izham@gmail.com",
+            "role": "Owner"
+        }
+    ],
+    "require": {
+        "php": "^8.0",
+        "illuminate/support": "^8.0|^9.0|^10.0|^11.0|^12.0",
+        "nesbot/carbon": "^2.48.0|^3.0"
+    },
+    "require-dev": {
+        "orchestra/testbench": "^8.5",
+        "phpunit/phpunit": "^10.1"
+    },
+    "autoload": {
+        "psr-4": {
+            "ZarulIzham\\Fpx\\": "src"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "ZarulIzham\\Fpx\\Tests\\": "tests"
+        }
+    },
+    "scripts": {
+        "test": "vendor/bin/phpunit",
+        "test-coverage": "vendor/bin/phpunit --coverage-html coverage"
+    },
+    "config": {
+        "sort-packages": true
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "ZarulIzham\\Fpx\\FpxServiceProvider"
+            ]
+        }
+    }
+}

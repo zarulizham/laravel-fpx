@@ -1,0 +1,38 @@
+<?php
+
+use ZarulIzham\Fpx\Models\Bank;
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     *
+     * @return void
+     */
+    public function up()
+    {
+        Schema::create(config('fpx.tables.banks', 'banks'), function (Blueprint $table) {
+            $table->id();
+            $table->string('bank_id');
+            $table->string('name');
+            $table->string('short_name');
+            $table->string('type', 5)->nullable();
+            $table->integer('position')->nullable();
+            $table->string('status')->default(Bank::STATUS_OFFLINE);
+            $table->timestamps();
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     *
+     * @return void
+     */
+    public function down()
+    {
+        Schema::dropIfExists(config('fpx.tables.banks', 'banks'));
+    }
+};
