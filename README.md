@@ -1,4 +1,9 @@
-# Very short description of the package
+# Laravel FPX
+
+<p>
+	<img src="public/assets/images/fpx.svg" alt="FPX Logo" height="60" />
+	<img src="public/assets/images/laravel.png" alt="Laravel Logo" height="60" />
+</p>
 
 This package provides Laravel implementations for Paynet FPX services.
 
