@@ -2,6 +2,7 @@
 
 namespace ZarulIzham\Fpx\Messages;
 
+use Exception;
 use Illuminate\Support\Facades\Config;
 use ZarulIzham\Fpx\Constant\Response;
 use ZarulIzham\Fpx\Contracts\Message as Contract;
@@ -172,7 +173,11 @@ class AuthorizationConfirmation extends Message implements Contract
     {
         $transaction = FpxTransaction::query()
             ->where('exchange_order_number', $this->exchangeOrderNumber)
-            ->firstOrNew();
+            ->first();
+
+        if (! $transaction) {
+            throw new Exception("Transaction with exchange order number {$this->exchangeOrderNumber} not found.");
+        }
 
         $transaction->order_number = $this->orderNumber;
         $transaction->request_payload = $transaction->request_payload ?? null;

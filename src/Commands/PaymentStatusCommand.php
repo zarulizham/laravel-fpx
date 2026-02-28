@@ -2,6 +2,7 @@
 
 namespace ZarulIzham\Fpx\Commands;
 
+use Exception;
 use Illuminate\Console\Command;
 use Illuminate\Support\Arr;
 use ZarulIzham\Fpx\Fpx;
@@ -59,7 +60,7 @@ class PaymentStatusCommand extends Command
 				foreach ($orderNumbers as $row) {
 					$status[] = Fpx::getTransactionStatus($row['order_number']);
 				}
-			} catch (\Exception $e) {
+			} catch (Exception $e) {
 				$status[] = [
 					'status' => 'failed',
 					'message' => $e->getMessage(),

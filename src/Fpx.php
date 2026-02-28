@@ -152,7 +152,7 @@ class Fpx
                 'response_format' => null,
                 'additional_params' => null,
             ];
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return [
                 'status' => 'failed',
                 'message' => $e->getMessage(),

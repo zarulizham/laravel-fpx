@@ -2,6 +2,7 @@
 
 namespace ZarulIzham\Fpx\Commands;
 
+use Exception;
 use Illuminate\Console\Command;
 use ZarulIzham\Fpx\Messages\BankEnquiry;
 use ZarulIzham\Fpx\Models\Bank;
@@ -84,7 +85,7 @@ class UpdateBankListCommand extends Command
             $this->newLine();
 
             return 1;
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $this->error('request failed due to '.$e->getMessage());
             throw $e;
         }
