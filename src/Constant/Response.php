@@ -4,6 +4,7 @@ namespace ZarulIzham\Fpx\Constant;
 
 class Response
 {
+	protected static array $localeMapCache = [];
 
 	public const STATUS = [
 		"00" => "Approved",
@@ -44,7 +45,7 @@ class Response
 		"96" => "System Malfunction",
 		"98" => "MAC Error",
 		"99" => "Pending Authorization (Applicable for B2B model)",
-		"BB" => "Blocked Bank ",
+		"BB" => "Blocked Bank",
 		"BC" => "Transaction Cancelled By Customer",
 		"DA" => "Invalid Application Type",
 		"DB" => "Invalid Email Format",
@@ -85,22 +86,66 @@ class Response
 		"2X" => "Transaction Is Canceled By Merchant",
 		"B0" => "Order list format error",
 		"B1" => "Invalid seller ID",
-		"B2" => "Seller is not allow to refund",
-		"B3" => "Seller is not allow to do multiple refund",
+		"B2" => "Seller is not allowed to refund",
+		"B3" => "Seller is not allowed to do multiple refund",
 		"B4" => "Requested refund amount exceed maximum allowable",
-		"B5" => "Original transcation ID is not found",
-		"B6" => "Original transcation ID status is still pending debit/credit",
-		"B7" => "Original transcation ID status was not successful",
+		"B5" => "Original transaction ID is not found",
+		"B6" => "Original transaction ID status is still pending debit/credit",
+		"B7" => "Original transaction ID status was not successful",
 		"B8" => "Previous refund request still pending debit/credit",
-		"B9" => "Requested refund amount below minimun allowable",
-		"C1" => "Invalid refund transcation model",
+		"B9" => "Requested refund amount below minimum allowable",
+		"C1" => "Invalid refund transaction model",
 		"C2" => "Invalid refund buyer bank",
 		"C3" => "Invalid refund seller bank",
 		"C4" => "Refund request fail due to no valid order list",
 		"C5" => "Order list contain duplicate seller order number",
-		"1S" => "Bulk Refund Successful Submited",
-		"OO" => "Bulk Refund Debit Approved ",
+		"1S" => "Bulk Refund Successful Submitted",
+		"OO" => "Bulk Refund Debit Approved",
 	];
+
+	public static function message(?string $code, string $fallback = 'Unknown', ?string $locale = null): string
+	{
+		if (empty($code)) {
+			return $fallback;
+		}
+
+		$defaultMessage = self::STATUS[$code] ?? $fallback;
+		$targetLocale = $locale ?: app()->getLocale();
+		$messages = self::localeMessages($targetLocale);
+
+		return $messages['status'][$code] ?? $defaultMessage;
+	}
+
+	protected static function localeMessages(string $locale): array
+	{
+		if (isset(self::$localeMapCache[$locale])) {
+			return self::$localeMapCache[$locale];
+		}
+
+		$paths = [];
+
+		if (function_exists('lang_path')) {
+			$paths[] = lang_path("vendor/laravel-fpx/$locale.php");
+		}
+
+		$paths[] = base_path("lang/vendor/laravel-fpx/$locale.php");
+		$paths[] = resource_path("lang/vendor/laravel-fpx/$locale.php");
+		$paths[] = __DIR__."/../../resources/lang/$locale.php";
+
+		foreach ($paths as $path) {
+			if (! is_file($path)) {
+				continue;
+			}
+
+			$data = include $path;
+
+			if (is_array($data)) {
+				return self::$localeMapCache[$locale] = $data;
+			}
+		}
+
+		return self::$localeMapCache[$locale] = [];
+	}
 }
 
 

@@ -81,6 +81,11 @@ class FpxServiceProvider extends ServiceProvider
 				__DIR__.'/../resources/views/payment.blade.php' => resource_path('views/vendor/fpx-payment/payment.blade.php'),
 			], 'fpx-views');
 
+			$this->publishes([
+				__DIR__.'/../resources/lang/en.php' => lang_path('vendor/laravel-fpx/en.php'),
+				__DIR__.'/../resources/lang/ms.php' => lang_path('vendor/laravel-fpx/ms.php'),
+			], 'fpx-locales');
+
 			$this->commands([
 				UpdateBankListCommand::class,
 				FpxPublish::class,

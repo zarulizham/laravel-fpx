@@ -196,7 +196,8 @@ class AuthEnquiry extends Message implements Contract
         if ($this->debitResponseStatus == self::STATUS_SUCCESS_CODE) {
             return [
                 'status' => self::STATUS_SUCCESS,
-                'message' => 'Payment is successful',
+                'message' => __('laravel-fpx::messages.payment_successful'),
+                'debit_response_code' => $this->debitResponseStatus,
                 'transaction_id' => $this->foreignId,
                 'order_number' => $this->reference,
                 'exchange_order_number' => $this->id,
@@ -211,7 +212,8 @@ class AuthEnquiry extends Message implements Contract
         if ($this->debitResponseStatus == self::STATUS_PENDING_CODE) {
             return [
                 'status' => self::STATUS_PENDING,
-                'message' => 'Payment Transaction Pending',
+                'message' => __('laravel-fpx::messages.payment_pending'),
+                'debit_response_code' => $this->debitResponseStatus,
                 'transaction_id' => $this->foreignId,
                 'order_number' => $this->reference,
                 'exchange_order_number' => $this->id,
@@ -225,7 +227,8 @@ class AuthEnquiry extends Message implements Contract
 
         return [
             'status' => self::STATUS_FAILED,
-            'message' => @Response::STATUS[$this->debitResponseStatus] ?? 'Payment Request Failed',
+            'message' => Response::message($this->debitResponseStatus, 'Payment Request Failed'),
+            'debit_response_code' => $this->debitResponseStatus,
             'transaction_id' => $this->foreignId,
             'order_number' => $this->reference,
             'exchange_order_number' => $this->id,

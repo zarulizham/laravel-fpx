@@ -99,7 +99,7 @@ class AuthorizationConfirmation extends Message implements Contract
 
             return [
                 'status' => self::STATUS_FAILED,
-                'message' => @Response::STATUS[$this->debitResponseStatus] ?? 'Payment Request Failed',
+                'message' => Response::message($this->debitResponseStatus, 'Payment Request Failed'),
                 'transaction_id' => $this->foreignId,
                 'order_number' => $this->orderNumber,
                 'exchange_order_number' => $this->exchangeOrderNumber,

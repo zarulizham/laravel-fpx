@@ -38,7 +38,7 @@ class FpxPublish extends Command
 	 */
 	public function handle()
 	{
-		$publishables = ['config', 'migrations', 'controller', 'assets', 'views'];
+		$publishables = ['config', 'migrations', 'controller', 'assets', 'views', 'locales'];
 
 		$force = $this->argument('force');
 

@@ -47,7 +47,7 @@ class FpxTransaction extends Model
 
 	public function getResponseCodeDescriptionAttribute()
 	{
-		return Response::STATUS[$this->debit_auth_code] ?? 'Unknown';
+		return Response::message($this->debit_auth_code);
 	}
 
 	public function reference(): MorphTo
