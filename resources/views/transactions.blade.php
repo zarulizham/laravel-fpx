@@ -15,6 +15,35 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
         integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
     <style>
+        :root,
+        [data-bs-theme="light"],
+        [data-bs-theme="dark"] {
+            --bs-primary: #4188C6;
+            --bs-primary-rgb: 65, 136, 198;
+        }
+
+        .btn-primary {
+            --bs-btn-bg: #4188C6;
+            --bs-btn-border-color: #4188C6;
+            --bs-btn-hover-bg: #3677ae;
+            --bs-btn-hover-border-color: #3677ae;
+            --bs-btn-active-bg: #316da0;
+            --bs-btn-active-border-color: #316da0;
+            --bs-btn-disabled-bg: #4188C6;
+            --bs-btn-disabled-border-color: #4188C6;
+        }
+
+        .btn-outline-primary {
+            --bs-btn-color: #4188C6;
+            --bs-btn-border-color: #4188C6;
+            --bs-btn-hover-bg: #4188C6;
+            --bs-btn-hover-border-color: #4188C6;
+            --bs-btn-active-bg: #316da0;
+            --bs-btn-active-border-color: #316da0;
+            --bs-btn-disabled-color: #4188C6;
+            --bs-btn-disabled-border-color: #4188C6;
+        }
+
         body {
             font-family: 'Rubik', sans-serif;
         }
@@ -41,15 +70,19 @@
     </script>
 </head>
 
-<body>
-    <div id="transactions-app" class="container py-4">
-        <div class="d-flex justify-content-between mb-3 align-items-center">
-            <img src="{{ asset('assets/vendor/fpx/images/fpx.svg') }}" alt="" height="40">
-            <div class="form-check form-switch">
+<body class="bg-body-tertiary">
+    <nav class="navbar navbar-expand-lg border-bottom mb-4">
+        <div class="container">
+            <a class="navbar-brand m-0 p-0" href="#" aria-label="FPX">
+                <img src="{{ asset('assets/vendor/fpx/images/fpx.svg') }}" alt="FPX" height="45">
+            </a>
+            <div class="form-check form-switch ms-auto mb-0 d-flex align-items-center gap-2">
                 <input class="form-check-input" type="checkbox" role="switch" id="themeToggle">
                 <label class="form-check-label" for="themeToggle">Dark mode</label>
             </div>
         </div>
+    </nav>
+    <div id="transactions-app" class="container">
 
         <div class="d-flex justify-content-between align-items-center mb-3">
             <h1 class="h3 m-0">FPX Transactions</h1>
@@ -62,7 +95,7 @@
             <button type="button" class="btn-close" aria-label="Close" @click="clearAlert"></button>
         </div>
 
-        <div class="card mb-3">
+        <div class="card mb-3 border-0 shadow-sm">
             <div class="card-body">
                 <form class="row g-2" @submit.prevent="applyFilters">
                     <div class="col-md-6">
@@ -84,7 +117,7 @@
             </div>
         </div>
 
-        <div class="card">
+        <div class="card border-0 shadow-sm">
             <div class="card-body px-0">
                 <div class="table-responsive">
                     <table class="table table-striped table-hover align-middle mb-0 table-sm">
@@ -138,14 +171,14 @@
             </div>
         </div>
 
-        <div class="d-flex justify-content-between align-items-center mt-3">
-            <button type="button" class="btn btn-outline-secondary btn-sm" :disabled="!pagination.prev_page_url || loading" @click="fetchTransactions(pagination.current_page - 1)">
-                Previous
-            </button>
-            <span class="text-muted">Page @{{ pagination.current_page }} of @{{ pagination.last_page }}</span>
-            <button type="button" class="btn btn-outline-secondary btn-sm" :disabled="!pagination.next_page_url || loading" @click="fetchTransactions(pagination.current_page + 1)">
-                Next
-            </button>
+        <div class="d-flex justify-content-between align-items-center mt-4" v-if="transactions.length > 0">
+            <small class="text-muted">
+                Showing @{{ pagination.from || 0 }}-@{{ pagination.to || 0 }} of @{{ pagination.total }}
+            </small>
+            <div class="btn-group btn-group-sm">
+                <button class="btn btn-outline-secondary" :disabled="loading || pagination.currentPage <= 1" @click="previousPage">Previous</button>
+                <button class="btn btn-outline-secondary" :disabled="loading || pagination.currentPage >= pagination.lastPage" @click="nextPage">Next</button>
+            </div>
         </div>
 
         <div class="modal fade" id="transactionDetailsModal" tabindex="-1" aria-labelledby="transactionDetailsModalLabel" aria-hidden="true">
@@ -267,10 +300,12 @@
                         transactions: [],
                         pagination: {
                             total: 0,
-                            current_page: 1,
-                            last_page: 1,
-                            next_page_url: null,
-                            prev_page_url: null,
+                            from: 0,
+                            to: 0,
+                            currentPage: 1,
+                            lastPage: 1,
+                            nextPageUrl: null,
+                            prevPageUrl: null,
                         },
                         alert: {
                             type: 'info',
@@ -331,10 +366,12 @@
                             this.transactions = payload.data || [];
                             this.pagination = {
                                 total: payload.total || 0,
-                                current_page: payload.current_page || 1,
-                                last_page: payload.last_page || 1,
-                                next_page_url: payload.next_page_url,
-                                prev_page_url: payload.prev_page_url,
+                                from: payload.from || 0,
+                                to: payload.to || 0,
+                                currentPage: payload.current_page || 1,
+                                lastPage: payload.last_page || 1,
+                                nextPageUrl: payload.next_page_url,
+                                prevPageUrl: payload.prev_page_url,
                             };
                         } catch (error) {
                             this.alert = {
@@ -413,6 +450,20 @@
                         this.filters.search = '';
                         this.filters.status = '';
                         this.fetchTransactions(1);
+                    },
+                    previousPage: function() {
+                        if (this.pagination.currentPage <= 1 || this.loading) {
+                            return;
+                        }
+
+                        this.fetchTransactions(this.pagination.currentPage - 1);
+                    },
+                    nextPage: function() {
+                        if (this.pagination.currentPage >= this.pagination.lastPage || this.loading) {
+                            return;
+                        }
+
+                        this.fetchTransactions(this.pagination.currentPage + 1);
                     }
                 }
             });
