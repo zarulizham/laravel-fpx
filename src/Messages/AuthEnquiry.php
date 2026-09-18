@@ -274,7 +274,7 @@ class AuthEnquiry extends Message implements Contract
             'fpx_debitAuthNo' => $this->debitResponseNumber ?? '',
             'fpx_fpxTxnId' => $this->foreignId ?? '',
             'fpx_fpxTxnTime' => $this->foreignTimestamp ?? '',
-            'fpx_makerName' => $this->buyerMakerName ?? '',
+            'fpx_makerName' => $this->makerName ?? '',
             'fpx_msgToken' => $this->flow ?? '',
             'fpx_msgType' => $this->type ?? '',
             'fpx_sellerExId' => $this->exchangeId ?? '',
