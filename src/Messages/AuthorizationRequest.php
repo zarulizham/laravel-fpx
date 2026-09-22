@@ -47,6 +47,10 @@ class AuthorizationRequest extends Message implements Contract
 	 */
 	public function handle($options)
 	{
+		$amountRange = in_array($options['flow'] ?? null, ['02', '03'], true)
+			? 'between:2,1000000'
+			: 'between:1,30000';
+
 		$data = Validator::make(
 			$options,
 			[
@@ -59,18 +63,19 @@ class AuthorizationRequest extends Message implements Contract
 				'response_format' => 'nullable',
 				'remark' => 'nullable',
 				'additional_params' => 'nullable',
-				'amount' => 'required|numeric|between:'.Config::get('fpx.min_amount', '1').','.Config::get('fpx.max_amount', '30000'),
+				'amount' => 'required|numeric|'.$amountRange,
 				'customer_name' => 'required',
 				'customer_email' => 'required',
 				'bank_id' => 'required',
 				'flow' => 'required|in:01,02,03',
 			],
 			[
-				'order_number.required' => 'Order Number is required.',
-				'customer_name.required' => 'Buyer Name is required.',
-				'customer_email.required' => 'Email is required.',
-				'bank_id.required' => 'Please select bank for the payment.',
-				'flow.required' => 'Please select bank type.'
+				'order_number.required' => __('laravel-fpx::messages.order_number_required'),
+				'amount.between' => __('laravel-fpx::messages.amount_between'),
+				'customer_name.required' => __('laravel-fpx::messages.customer_name_required'),
+				'customer_email.required' => __('laravel-fpx::messages.customer_email_required'),
+				'bank_id.required' => __('laravel-fpx::messages.bank_id_required'),
+				'flow.required' => __('laravel-fpx::messages.flow_required'),
 			],
 		)->validate();
 
