@@ -47,9 +47,11 @@ class AuthorizationRequest extends Message implements Contract
 	 */
 	public function handle($options)
 	{
-		$amountRange = in_array($options['flow'] ?? null, ['02', '03'], true)
-			? 'between:2,1000000'
-			: 'between:1,30000';
+		[$minAmount, $maxAmount] = in_array($options['flow'] ?? null, ['02', '03'], true)
+			? [2, 1000000]
+			: [1, 30000];
+
+		$amountRange = 'between:'.$minAmount.','.$maxAmount;
 
 		$data = Validator::make(
 			$options,
@@ -71,7 +73,10 @@ class AuthorizationRequest extends Message implements Contract
 			],
 			[
 				'order_number.required' => __('laravel-fpx::messages.order_number_required'),
-				'amount.between' => __('laravel-fpx::messages.amount_between'),
+				'amount.between' => __('laravel-fpx::messages.amount_between', [
+					'min' => number_format($minAmount, 2),
+					'max' => number_format($maxAmount, 2),
+				]),
 				'customer_name.required' => __('laravel-fpx::messages.customer_name_required'),
 				'customer_email.required' => __('laravel-fpx::messages.customer_email_required'),
 				'bank_id.required' => __('laravel-fpx::messages.bank_id_required'),
